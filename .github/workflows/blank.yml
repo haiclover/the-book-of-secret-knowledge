@@ -1,0 +1,55 @@
+name: "gau"
+description: "getallurls (gau) fetches known URLs from many public resource."
+branding:
+  icon: "activity"
+  color: "blue"
+
+inputs:
+
+  threads:
+    description: "Number of threads"
+    required: false   
+    default: 1 
+
+  urls:
+    description: "list of domains to scan"
+    required: true      
+
+  blacklist:
+    description: "list of extensions to skip : 'jpg,txt' "
+    required: false
+
+
+  subdomains:
+    description: "include subdomains of target domain"
+    required: false
+    default: false
+
+  output:
+    description: "File to save output result"
+    required: false
+    default: "gau.log"   
+
+
+
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        [ ! -x /home/runner/go/bin/gau ] && go install -v github.com/lc/gau/v2/cmd/gau@latest
+        [ ! -z ${{ inputs.urls }} ] && echo "urls=${{ inputs.urls}}" >> $GITHUB_ENV        
+        [ ! -z ${{ inputs.threads }} ] && echo "threads=--threads ${{ inputs.threads}}" >> $GITHUB_ENV
+        [ ! -z ${{ inputs.blacklist }} ] && echo "blacklist=--blacklist ${{ inputs.blacklist}}" >> $GITHUB_ENV
+        [ ! -z ${{ inputs.subdomains }} ] && echo "subdomains=--subs=${{ inputs.subdomains}}" >> $GITHUB_ENV                
+        [ ! -z ${{ inputs.output }} ] && echo "output=--o ${{ inputs.output}}" >> $GITHUB_ENV      
+        echo "/home/runner/go/bin/" >> $GITHUB_PATH
+      shell: bash
+    - run: |
+        cat ${{ env.urls }} | \
+         /home/runner/go/bin/gau \
+         ${{ env.threads }} \
+         ${{ env.blacklist }} \
+         ${{ env.subdomains }} \
+         ${{ env.output }}
+      shell: bash
